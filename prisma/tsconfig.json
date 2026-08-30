@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "lib": ["es2017"],
+    "skipLibCheck": true,
+    "strict": true
+  },
+  "include": ["prisma/**/*.ts"]
+}

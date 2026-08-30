@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Room {
+  id        String   @id @default(cuid())
+  code      String   @unique @map("code")
+  password  String
+  createdAt DateTime @default(now()) @map("created_at")
+  files     File[]
+
+  @@map("rooms")
+}
+
+model File {
+  id          String   @id @default(cuid())
+  driveFileId String   @unique @map("drive_file_id")
+  name        String
+  size        Int
+  mimeType    String   @map("mime_type")
+  roomId      String   @map("room_id")
+  room        Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([roomId])
+  @@map("files")
+}
