@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { streamFromDrive } from "@/lib/googleDrive";
+import { streamFromStorage } from "@/lib/storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,8 +26,8 @@ export async function GET(
   }
 
   try {
-    const res = await streamFromDrive(file.driveFileId);
-    const data = res.data as unknown as NodeJS.ReadableStream;
+    const res = await streamFromStorage(file.driveFileId);
+    const data = res.Body as unknown as NodeJS.ReadableStream;
 
     const headers = new Headers();
     headers.set("Content-Type", file.mimeType);
@@ -41,7 +41,7 @@ export async function GET(
   } catch (error) {
     console.error("Download failed", error);
     return NextResponse.json(
-      { error: "Gagal mengambil file dari Google Drive." },
+      { error: "Gagal mengambil file dari penyimpanan." },
       { status: 500 }
     );
   }

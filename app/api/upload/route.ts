@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { uploadToDrive } from "@/lib/googleDrive";
+import { uploadToStorage } from "@/lib/storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +22,15 @@ function parseMultipart(body: Buffer, boundary: string): ParsedFile[] {
   while (true) {
     const partStart = body.indexOf(delimiter, start);
     if (partStart === -1) break;
+
+    const afterDelim = body
+      .subarray(
+        partStart + delimiter.length,
+        partStart + delimiter.length + 2
+      )
+      .toString("latin1");
+    if (afterDelim === "--") break;
+
     const headerStart = partStart + delimiter.length;
 
     let headerEnd = body.indexOf(Buffer.from("\r\n\r\n"), headerStart);
@@ -51,9 +60,7 @@ function parseMultipart(body: Buffer, boundary: string): ParsedFile[] {
       });
     }
 
-    start = dataEnd + delimiter.length;
-    const after = body.indexOf(Buffer.from("--"), start);
-    if (after !== -1 && after === start) break;
+    start = dataEnd;
   }
 
   return parts;
@@ -119,7 +126,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const driveResult = await uploadToDrive({
+    const driveResult = await uploadToStorage({
       name: filePart.filename,
       mimeType: filePart.mimeType,
       body: filePart.data,
@@ -140,7 +147,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Upload failed", error);
     return NextResponse.json(
-      { error: "Gagal mengunggah file ke Google Drive." },
+      { error: "Gagal mengunggah file ke penyimpanan." },
       { status: 500 }
     );
   }
