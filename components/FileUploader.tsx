@@ -10,6 +10,8 @@ type FileEntry = {
   createdAt: string;
 };
 
+const MAX_SIZE = 100 * 1024 * 1024;
+
 export default function FileUploader({
   roomId,
   onUploaded,
@@ -25,9 +27,11 @@ export default function FileUploader({
 
   async function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
-    const file = files[0];
-    if (file.size > 100 * 1024 * 1024) {
-      setError("Ukuran file melebihi batas maksimum 100MB.");
+    const list = Array.from(files);
+
+    const tooBig = list.find((f) => f.size > MAX_SIZE);
+    if (tooBig) {
+      setError(`"${tooBig.name}" melebihi batas maksimum 100MB.`);
       return;
     }
 
@@ -35,42 +39,50 @@ export default function FileUploader({
     setError("");
     setProgress(0);
 
-    const formData = new FormData();
-    formData.append("roomId", roomId);
-    formData.append("file", file);
+    let done = 0;
+    for (const file of list) {
+      const formData = new FormData();
+      formData.append("roomId", roomId);
+      formData.append("file", file);
 
-    try {
-      const xhr = new XMLHttpRequest();
-      const uploaded = await new Promise<FileEntry>((resolve, reject) => {
-        xhr.open("POST", "/api/upload");
-        xhr.upload.onprogress = (e) => {
-          if (e.lengthComputable) {
-            setProgress(Math.round((e.loaded / e.total) * 100));
-          }
-        };
-        xhr.onload = () => {
-          try {
-            const data = JSON.parse(xhr.responseText);
-            if (xhr.status >= 200 && xhr.status < 300) {
-              resolve(data.file);
-            } else {
-              reject(new Error(data.error || "Gagal mengunggah file"));
+      try {
+        const uploaded = await new Promise<FileEntry>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open("POST", "/api/upload");
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const overall = ((done + e.loaded / e.total) / list.length) * 100;
+              setProgress(Math.round(overall));
             }
-          } catch {
-            reject(new Error("Gagal mengunggah file"));
-          }
-        };
-        xhr.onerror = () => reject(new Error("Terjadi kesalahan jaringan"));
-        xhr.send(formData);
-      });
-      onUploaded(uploaded);
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setUploading(false);
-      setProgress(0);
-      if (inputRef.current) inputRef.current.value = "";
+          };
+          xhr.onload = () => {
+            try {
+              const data = JSON.parse(xhr.responseText);
+              if (xhr.status >= 200 && xhr.status < 300) {
+                resolve(data.file);
+              } else {
+                reject(new Error(data.error || `Gagal mengunggah "${file.name}"`));
+              }
+            } catch {
+              reject(new Error(`Gagal mengunggah "${file.name}"`));
+            }
+          };
+          xhr.onerror = () =>
+            reject(new Error(`Kesalahan jaringan saat "${file.name}"`));
+          xhr.send(formData);
+        });
+        onUploaded(uploaded);
+      } catch (e: any) {
+        setError(e.message);
+        break;
+      } finally {
+        done += 1;
+      }
     }
+
+    setUploading(false);
+    setProgress(0);
+    if (inputRef.current) inputRef.current.value = "";
   }
 
   return (
@@ -96,6 +108,7 @@ export default function FileUploader({
         <input
           ref={inputRef}
           type="file"
+          multiple
           hidden
           onChange={(e) => handleFiles(e.target.files)}
         />
@@ -108,7 +121,7 @@ export default function FileUploader({
           </p>
         )}
         <p className="mt-1 text-xs text-slate-500">
-          Maksimal 100MB per file
+          Bisa pilih atau seret banyak file sekaligus · maks 100MB per file
         </p>
       </div>
       {uploading && (
