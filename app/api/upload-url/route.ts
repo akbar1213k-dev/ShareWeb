@@ -47,6 +47,6 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { fileId, uploadUrl } = await createPresignedUploadUrl({ name, mimeType });
+  const { fileId, uploadUrl } = await createPresignedUploadUrl();
   return NextResponse.json({ fileId, uploadUrl, name, mimeType, size });
 }

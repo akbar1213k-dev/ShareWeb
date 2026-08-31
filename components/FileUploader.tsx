@@ -59,8 +59,6 @@ export default function FileUploader({
         await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
           xhr.open("PUT", urlData.uploadUrl);
-          xhr.setRequestHeader("Content-Type", mimeType);
-          xhr.setRequestHeader("x-amz-meta-filename", file.name);
           xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
               const overall = ((done + e.loaded / e.total) / list.length) * 100;
@@ -79,7 +77,12 @@ export default function FileUploader({
         const confirmRes = await fetch("/api/upload/confirm", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ roomId, fileId: urlData.fileId }),
+          body: JSON.stringify({
+            roomId,
+            fileId: urlData.fileId,
+            name: file.name,
+            mimeType,
+          }),
         });
         const confirmData = await confirmRes.json();
         if (!confirmRes.ok)

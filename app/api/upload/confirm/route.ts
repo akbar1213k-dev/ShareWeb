@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  let body: { roomId?: string; fileId?: string };
+  let body: { roomId?: string; fileId?: string; name?: string; mimeType?: string };
   try {
     body = await request.json();
   } catch {
@@ -15,10 +15,12 @@ export async function POST(request: NextRequest) {
 
   const roomId = (body.roomId ?? "").trim();
   const fileId = (body.fileId ?? "").trim();
+  const name = (body.name ?? "").trim();
+  const mimeType = (body.mimeType ?? "").trim() || "application/octet-stream";
 
-  if (!roomId || !fileId) {
+  if (!roomId || !fileId || !name) {
     return NextResponse.json(
-      { error: "roomId dan fileId wajib ada." },
+      { error: "roomId, fileId, dan name wajib ada." },
       { status: 400 }
     );
   }
@@ -50,9 +52,9 @@ export async function POST(request: NextRequest) {
   const file = await prisma.file.create({
     data: {
       driveFileId: fileId,
-      name: meta.name,
+      name,
       size: meta.size,
-      mimeType: meta.mimeType,
+      mimeType,
       roomId,
     },
     select: { id: true, name: true, size: true, mimeType: true, createdAt: true },

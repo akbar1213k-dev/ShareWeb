@@ -69,19 +69,14 @@ export async function uploadToStorage(params: {
   return { id: key };
 }
 
-export async function createPresignedUploadUrl(params: {
-  name: string;
-  mimeType: string;
-}): Promise<{ fileId: string; uploadUrl: string }> {
+export async function createPresignedUploadUrl(): Promise<{
+  fileId: string;
+  uploadUrl: string;
+}> {
   const key = randomUUID();
   const uploadUrl = await getSignedUrl(
     getClient(),
-    new PutObjectCommand({
-      Bucket: getBucket(),
-      Key: key,
-      ContentType: params.mimeType,
-      Metadata: { filename: params.name },
-    }),
+    new PutObjectCommand({ Bucket: getBucket(), Key: key }),
     { expiresIn: 3600 }
   );
   return { fileId: key, uploadUrl };
