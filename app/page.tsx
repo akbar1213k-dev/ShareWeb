@@ -1,5 +1,6 @@
 import CreateRoom from "@/components/CreateRoom";
 import JoinRoom from "@/components/JoinRoom";
+import HistoryPanel from "@/components/HistoryPanel";
 
 export default function Home() {
   return (
@@ -8,7 +9,7 @@ export default function Home() {
         <h1 className="text-4xl font-bold sm:text-5xl">ShareWeb 📤</h1>
         <p className="mx-auto mt-4 max-w-md text-slate-400">
           Kirim file antar perangkat secara aman. Buat room, bagikan kode dan
-          password, lalu unduh di perangkat lain. File disimpan di Google Drive.
+          password, lalu unduh di perangkat lain.
         </p>
       </div>
 
@@ -17,10 +18,12 @@ export default function Home() {
         <JoinRoom />
       </div>
 
+      <HistoryPanel />
+
       <div className="grid w-full gap-4 sm:grid-cols-3">
         {[
           { icon: "🔐", title: "Aman", desc: "Proteksi dengan password unik per room" },
-          { icon: "☁️", title: "Di cloud", desc: "File tersimpan di Google Drive" },
+          { icon: "☁️", title: "Di cloud", desc: "File tersimpan dengan aman di penyimpanan cloud" },
           { icon: "📱", title: "Multi-perangkat", desc: "Akses dari perangkat mana pun" },
         ].map((f) => (
           <div

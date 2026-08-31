@@ -13,6 +13,23 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const room = await prisma.room.findUnique({
+    where: { id: roomId },
+    select: { status: true },
+  });
+  if (!room) {
+    return NextResponse.json(
+      { error: "Room tidak ditemukan." },
+      { status: 404 }
+    );
+  }
+  if (room.status !== "ACTIVE") {
+    return NextResponse.json(
+      { error: "Room ini telah dinonaktifkan." },
+      { status: 403 }
+    );
+  }
+
   const files = await prisma.file.findMany({
     where: { roomId },
     orderBy: { createdAt: "desc" },

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { saveToHistory } from "@/lib/history";
 
 export default function JoinRoom() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function JoinRoom() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal masuk room");
+      saveToHistory({ roomId: data.roomId, code: data.code });
       router.push(`/room/${data.roomId}?code=${encodeURIComponent(data.code)}`);
     } catch (e: any) {
       setError(e.message);

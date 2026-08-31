@@ -18,11 +18,19 @@ export async function GET(
       driveFileId: true,
       name: true,
       mimeType: true,
+      room: { select: { status: true } },
     },
   });
 
   if (!file) {
     return NextResponse.json({ error: "File tidak ditemukan." }, { status: 404 });
+  }
+
+  if (file.room.status !== "ACTIVE") {
+    return NextResponse.json(
+      { error: "Room ini telah dinonaktifkan." },
+      { status: 403 }
+    );
   }
 
   try {

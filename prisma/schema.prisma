@@ -11,6 +11,7 @@ model Room {
   id        String   @id @default(cuid())
   code      String   @unique @map("code")
   password  String
+  status    String   @default("ACTIVE") @map("status")
   createdAt DateTime @default(now()) @map("created_at")
   files     File[]
 

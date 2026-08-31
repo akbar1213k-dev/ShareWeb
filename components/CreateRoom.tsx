@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { saveToHistory } from "@/lib/history";
 
 export default function CreateRoom() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function CreateRoom() {
       const res = await fetch("/api/room", { method: "POST" });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Gagal membuat room");
+      saveToHistory({ roomId: data.roomId, code: data.code });
       router.push(`/room/${data.roomId}?code=${encodeURIComponent(data.code)}&pw=${encodeURIComponent(data.password)}`);
     } catch (e: any) {
       setError(e.message);

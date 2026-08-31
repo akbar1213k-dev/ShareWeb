@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import FileListWrapper from "@/components/FileListWrapper";
 import RoomShareInfo from "@/components/RoomShareInfo";
+import RoomActions from "@/components/RoomActions";
 import { formatBytes } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export default async function RoomPage({
 }) {
   const room = await prisma.room.findUnique({
     where: { id: params.id },
-    select: { id: true, code: true },
+    select: { id: true, code: true, status: true },
   });
 
   if (!room) {
@@ -54,14 +55,34 @@ export default async function RoomPage({
     createdAt: f.createdAt.toISOString(),
   }));
 
+  const isActive = room.status === "ACTIVE";
+
   return (
     <div className="flex flex-col gap-8">
       <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6">
-        <h1 className="text-2xl font-bold">Room {room.code}</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">Room {room.code}</h1>
+          <span
+            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+              isActive
+                ? "bg-emerald-500/20 text-emerald-400"
+                : "bg-red-500/20 text-red-400"
+            }`}
+          >
+            {isActive ? "Aktif" : "Nonaktif"}
+          </span>
+        </div>
         <p className="mt-1 text-sm text-slate-400">
           {files.length} file · {formatBytes(totalSize)} total
         </p>
+        {!isActive && (
+          <p className="mt-2 rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
+            Room ini nonaktif — pengguna lain tidak dapat mengaksesnya.
+          </p>
+        )}
       </div>
+
+      <RoomActions roomId={room.id} initialStatus={room.status} />
 
       <RoomShareInfo
         roomId={room.id}

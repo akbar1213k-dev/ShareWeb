@@ -17,11 +17,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const room = await prisma.room.findUnique({ where: { code } });
+    const room = await prisma.room.findUnique({
+      where: { code },
+      select: { id: true, code: true, password: true, status: true },
+    });
     if (!room || !(await verifyPassword(password, room.password))) {
       return NextResponse.json(
         { error: "Kode room atau password salah." },
         { status: 401 }
+      );
+    }
+    if (room.status !== "ACTIVE") {
+      return NextResponse.json(
+        { error: "Room ini telah dinonaktifkan." },
+        { status: 403 }
       );
     }
 

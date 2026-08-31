@@ -15,3 +15,17 @@ export function formatDate(date: Date): string {
     minute: "2-digit",
   }).format(date);
 }
+
+export function formatDateIn(timestamp: number): string {
+  const diff = Date.now() - timestamp;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "baru saja";
+  if (min < 60) return `${min} menit lalu`;
+  const hours = Math.floor(min / 60);
+  if (hours < 24) return `${hours} jam lalu`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days} hari lalu`;
+  return new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" }).format(
+    new Date(timestamp)
+  );
+}
