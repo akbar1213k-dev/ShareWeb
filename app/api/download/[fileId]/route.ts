@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-import { streamFromStorage } from "@/lib/storage";
+import { createPresignedDownloadUrl } from "@/lib/storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   context: { params: { fileId: string } }
 ) {
   const fileId = context.params.fileId;
@@ -17,7 +17,6 @@ export async function GET(
       id: true,
       driveFileId: true,
       name: true,
-      mimeType: true,
       room: { select: { status: true } },
     },
   });
@@ -34,18 +33,8 @@ export async function GET(
   }
 
   try {
-    const res = await streamFromStorage(file.driveFileId);
-    const data = res.Body as unknown as NodeJS.ReadableStream;
-
-    const headers = new Headers();
-    headers.set("Content-Type", file.mimeType);
-    headers.set(
-      "Content-Disposition",
-      `attachment; filename*=UTF-8''${encodeURIComponent(file.name)}`
-    );
-    headers.set("Cache-Control", "no-store");
-
-    return new NextResponse(data as any, { headers });
+    const url = await createPresignedDownloadUrl(file.driveFileId, file.name);
+    return NextResponse.redirect(url);
   } catch (error) {
     console.error("Download failed", error);
     return NextResponse.json(

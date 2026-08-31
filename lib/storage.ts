@@ -5,6 +5,7 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { randomUUID } from "crypto";
 
 let cachedClient: S3Client | null = null;
@@ -66,6 +67,38 @@ export async function uploadToStorage(params: {
     })
   );
   return { id: key };
+}
+
+export async function createPresignedUploadUrl(params: {
+  name: string;
+  mimeType: string;
+}): Promise<{ fileId: string; uploadUrl: string }> {
+  const key = randomUUID();
+  const uploadUrl = await getSignedUrl(
+    getClient(),
+    new PutObjectCommand({
+      Bucket: getBucket(),
+      Key: key,
+      ContentType: params.mimeType,
+      Metadata: { filename: params.name },
+    }),
+    { expiresIn: 3600 }
+  );
+  return { fileId: key, uploadUrl };
+}
+
+export async function createPresignedDownloadUrl(
+  key: string,
+  name?: string
+): Promise<string> {
+  const command = new GetObjectCommand({ Bucket: getBucket(), Key: normalizeKey(key) });
+  if (name) {
+    command.input.ResponseContentDisposition = `attachment; filename*=UTF-8''${encodeURIComponent(
+      name
+    )}`;
+    command.input.ResponseContentType = "application/octet-stream";
+  }
+  return getSignedUrl(getClient(), command, { expiresIn: 3600 });
 }
 
 export async function getStorageFileMeta(key: string) {

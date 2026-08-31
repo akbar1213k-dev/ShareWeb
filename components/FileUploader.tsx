@@ -41,14 +41,26 @@ export default function FileUploader({
 
     let done = 0;
     for (const file of list) {
-      const formData = new FormData();
-      formData.append("roomId", roomId);
-      formData.append("file", file);
-
+      const mimeType = file.type || "application/octet-stream";
       try {
-        const uploaded = await new Promise<FileEntry>((resolve, reject) => {
+        const urlRes = await fetch("/api/upload-url", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            roomId,
+            name: file.name,
+            mimeType,
+            size: file.size,
+          }),
+        });
+        const urlData = await urlRes.json();
+        if (!urlRes.ok) throw new Error(urlData.error || "Gagal memulai upload.");
+
+        await new Promise<void>((resolve, reject) => {
           const xhr = new XMLHttpRequest();
-          xhr.open("POST", "/api/upload");
+          xhr.open("PUT", urlData.uploadUrl);
+          xhr.setRequestHeader("Content-Type", mimeType);
+          xhr.setRequestHeader("x-amz-meta-filename", file.name);
           xhr.upload.onprogress = (e) => {
             if (e.lengthComputable) {
               const overall = ((done + e.loaded / e.total) / list.length) * 100;
@@ -56,22 +68,23 @@ export default function FileUploader({
             }
           };
           xhr.onload = () => {
-            try {
-              const data = JSON.parse(xhr.responseText);
-              if (xhr.status >= 200 && xhr.status < 300) {
-                resolve(data.file);
-              } else {
-                reject(new Error(data.error || `Gagal mengunggah "${file.name}"`));
-              }
-            } catch {
-              reject(new Error(`Gagal mengunggah "${file.name}"`));
-            }
+            if (xhr.status >= 200 && xhr.status < 300) resolve();
+            else reject(new Error(`Gagal mengunggah "${file.name}"`));
           };
           xhr.onerror = () =>
             reject(new Error(`Kesalahan jaringan saat "${file.name}"`));
-          xhr.send(formData);
+          xhr.send(file);
         });
-        onUploaded(uploaded);
+
+        const confirmRes = await fetch("/api/upload/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ roomId, fileId: urlData.fileId }),
+        });
+        const confirmData = await confirmRes.json();
+        if (!confirmRes.ok)
+          throw new Error(confirmData.error || "Gagal memproses file.");
+        onUploaded(confirmData.file);
       } catch (e: any) {
         setError(e.message);
         break;
