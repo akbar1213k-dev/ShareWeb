@@ -7,6 +7,7 @@ import { formatDateIn } from "@/lib/format";
 type RoomInfo = {
   id: string;
   code: string;
+  name: string | null;
   status: string;
   fileCount: number;
   createdAt: string;
@@ -80,7 +81,12 @@ export default function HistoryPanel() {
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-semibold">{room.code}</span>
+                  <span className="truncate font-semibold">
+                    {room.name || `Room ${room.code}`}
+                  </span>
+                  <span className="font-mono text-xs text-slate-400">
+                    {room.code}
+                  </span>
                   <span
                     className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
                       room.status === "ACTIVE"

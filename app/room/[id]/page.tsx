@@ -2,6 +2,7 @@ import { prisma } from "@/lib/db";
 import FileListWrapper from "@/components/FileListWrapper";
 import RoomShareInfo from "@/components/RoomShareInfo";
 import RoomActions from "@/components/RoomActions";
+import EditRoomName from "@/components/EditRoomName";
 import { formatBytes } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -15,7 +16,7 @@ export default async function RoomPage({
 }) {
   const room = await prisma.room.findUnique({
     where: { id: params.id },
-    select: { id: true, code: true, status: true },
+    select: { id: true, code: true, status: true, name: true },
   });
 
   if (!room) {
@@ -60,10 +61,18 @@ export default async function RoomPage({
   return (
     <div className="flex flex-col gap-8">
       <div className="rounded-2xl border border-slate-700 bg-slate-800/50 p-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Room {room.code}</h1>
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <EditRoomName roomId={room.id} initialName={room.name} />
+            <h2 className="mt-1 text-sm text-slate-400">
+              <span className="font-mono font-semibold text-slate-300">
+                {room.code}
+              </span>{" "}
+              · {files.length} file · {formatBytes(totalSize)} total
+            </h2>
+          </div>
           <span
-            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
               isActive
                 ? "bg-emerald-500/20 text-emerald-400"
                 : "bg-red-500/20 text-red-400"
@@ -72,9 +81,6 @@ export default async function RoomPage({
             {isActive ? "Aktif" : "Nonaktif"}
           </span>
         </div>
-        <p className="mt-1 text-sm text-slate-400">
-          {files.length} file · {formatBytes(totalSize)} total
-        </p>
         {!isActive && (
           <p className="mt-2 rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
             Room ini nonaktif — pengguna lain tidak dapat mengaksesnya.

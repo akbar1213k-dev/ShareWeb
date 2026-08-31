@@ -3,6 +3,7 @@
 export type HistoryEntry = {
   roomId: string;
   code: string;
+  name?: string | null;
   lastAccessedAt: number;
 };
 
@@ -20,30 +21,40 @@ export function getHistory(): HistoryEntry[] {
   }
 }
 
-export function saveToHistory(entry: { roomId: string; code: string }) {
-  if (typeof window === "undefined") return;
-  const history = getHistory().filter((h) => h.roomId !== entry.roomId);
-  history.unshift({
-    roomId: entry.roomId,
-    code: entry.code,
-    lastAccessedAt: Date.now(),
-  });
-  const trimmed = history.slice(0, 30);
+function write(history: HistoryEntry[]) {
   try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(trimmed));
+    window.localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(history.slice(0, 30))
+    );
   } catch {
     /* storage full — ignore */
   }
 }
 
+export function saveToHistory(entry: { roomId: string; code: string; name?: string | null }) {
+  if (typeof window === "undefined") return;
+  const prev = getHistory().find((h) => h.roomId === entry.roomId);
+  const history = getHistory().filter((h) => h.roomId !== entry.roomId);
+  history.unshift({
+    roomId: entry.roomId,
+    code: entry.code,
+    name: entry.name ?? prev?.name ?? null,
+    lastAccessedAt: Date.now(),
+  });
+  write(history);
+}
+
+export function updateHistoryName(roomId: string, name: string | null) {
+  if (typeof window === "undefined") return;
+  write(
+    getHistory().map((h) =>
+      h.roomId === roomId ? { ...h, name: name ?? null } : h
+    )
+  );
+}
+
 export function removeFromHistory(roomId: string) {
   if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify(getHistory().filter((h) => h.roomId !== roomId))
-    );
-  } catch {
-    /* ignore */
-  }
+  write(getHistory().filter((h) => h.roomId !== roomId));
 }

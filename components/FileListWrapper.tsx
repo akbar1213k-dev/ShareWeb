@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import FileList from "./FileList";
 import FileUploader from "./FileUploader";
 
@@ -12,6 +12,8 @@ export type FileEntry = {
   createdAt: string;
 };
 
+const POLL_INTERVAL_MS = 3000;
+
 export default function FileListWrapper({
   roomId,
   initialFiles,
@@ -22,6 +24,23 @@ export default function FileListWrapper({
   const [files, setFiles] = useState<FileEntry[]>(initialFiles);
   const [clearing, setClearing] = useState(false);
   const [error, setError] = useState("");
+
+  const refresh = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/files?roomId=${encodeURIComponent(roomId)}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setFiles(data.files ?? []);
+      setError("");
+    } catch {
+      /* ignore transient poll errors */
+    }
+  }, [roomId]);
+
+  useEffect(() => {
+    const timer = setInterval(refresh, POLL_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [refresh]);
 
   async function clearAll() {
     const ok = window.confirm(
@@ -59,6 +78,9 @@ export default function FileListWrapper({
           </button>
         )}
       </div>
+      <p className="text-xs text-slate-500">
+        Daftar file diperbarui otomatis setiap beberapa detik.
+      </p>
       {error && (
         <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-400">
           {error}

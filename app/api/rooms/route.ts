@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
       id: true,
       code: true,
       status: true,
+      name: true,
       createdAt: true,
       _count: { select: { files: true } },
     },
@@ -34,6 +35,7 @@ export async function GET(request: NextRequest) {
       id: r!.id,
       code: r!.code,
       status: r!.status,
+      name: r!.name,
       fileCount: r!._count.files,
       createdAt: r!.createdAt.toISOString(),
     }));

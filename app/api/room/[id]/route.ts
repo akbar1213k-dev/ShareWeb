@@ -28,7 +28,7 @@ export async function GET(
 ) {
   const room = await prisma.room.findUnique({
     where: { id: context.params.id },
-    select: { id: true, code: true, status: true, createdAt: true },
+    select: { id: true, code: true, status: true, name: true, createdAt: true },
   });
   if (!room) {
     return NextResponse.json({ error: "Room tidak ditemukan." }, { status: 404 });
@@ -48,24 +48,32 @@ export async function PATCH(
     return NextResponse.json({ error: "Room tidak ditemukan." }, { status: 404 });
   }
 
-  let body: { action?: string };
+  let body: { action?: string; name?: string };
   try {
     body = await request.json();
   } catch {
     body = {};
   }
 
-  let status: string;
-  if (body.action === "deactivate") status = "INACTIVE";
-  else if (body.action === "activate") status = "ACTIVE";
-  else {
+  const data: { status?: string; name?: string | null } = {};
+  if (body.action === "deactivate") data.status = "INACTIVE";
+  else if (body.action === "activate") data.status = "ACTIVE";
+  else if (body.action !== undefined) {
     return NextResponse.json({ error: "Aksi tidak valid." }, { status: 400 });
+  }
+
+  if (typeof body.name === "string") {
+    data.name = body.name.trim() === "" ? null : body.name.trim();
+  }
+
+  if (Object.keys(data).length === 0) {
+    return NextResponse.json({ error: "Tidak ada perubahan." }, { status: 400 });
   }
 
   const updated = await prisma.room.update({
     where: { id: room.id },
-    data: { status },
-    select: { id: true, code: true, status: true },
+    data,
+    select: { id: true, code: true, status: true, name: true, createdAt: true },
   });
   return NextResponse.json({ room: updated });
 }
