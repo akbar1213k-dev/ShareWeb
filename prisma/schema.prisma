@@ -8,13 +8,14 @@ datasource db {
 }
 
 model Room {
-  id        String   @id @default(cuid())
-  code      String   @unique @map("code")
+  id        String         @id @default(cuid())
+  code      String         @unique @map("code")
   password  String
-  status    String   @default("ACTIVE") @map("status")
-  name      String?  @map("name")
-  createdAt DateTime @default(now()) @map("created_at")
+  status    String         @default("ACTIVE") @map("status")
+  name      String?        @map("name")
+  createdAt DateTime       @default(now()) @map("created_at")
   files     File[]
+  texts     TextTransfer[]
 
   @@map("rooms")
 }
@@ -31,4 +32,15 @@ model File {
 
   @@index([roomId])
   @@map("files")
+}
+
+model TextTransfer {
+  id        String   @id @default(cuid())
+  html      String   @db.Text
+  roomId    String   @map("room_id")
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([roomId, createdAt])
+  @@map("text_transfers")
 }

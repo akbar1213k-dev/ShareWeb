@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import FileList from "./FileList";
 import FileUploader from "./FileUploader";
+import TextTransferPanel from "./TextTransferPanel";
 
 export type FileEntry = {
   id: string;
@@ -63,23 +64,34 @@ export default function FileListWrapper({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <FileUploader
-          roomId={roomId}
-          onUploaded={(file) => setFiles((prev) => [file, ...prev])}
-        />
-        {files.length > 0 && (
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="rounded-2xl border border-slate-700 bg-slate-800/50 p-4">
+          <div className="mb-3">
+            <h3 className="font-semibold text-slate-100">Kirim File</h3>
+            <p className="text-xs text-slate-500">
+              Klik atau seret file ke area di bawah.
+            </p>
+          </div>
+          <FileUploader
+            roomId={roomId}
+            onUploaded={(file) => setFiles((prev) => [file, ...prev])}
+          />
+        </section>
+        <TextTransferPanel roomId={roomId} />
+      </div>
+      {files.length > 0 && (
+        <div className="flex justify-end">
           <button
             onClick={clearAll}
             disabled={clearing}
-            className="shrink-0 rounded-lg border border-amber-600/60 px-3 py-2 text-sm text-amber-400 transition hover:border-amber-500 disabled:opacity-50"
+            className="rounded-lg border border-amber-600/60 px-3 py-2 text-sm text-amber-400 transition hover:border-amber-500 disabled:opacity-50"
           >
             {clearing ? "..." : "Hapus Semua File"}
           </button>
-        )}
-      </div>
+        </div>
+      )}
       <p className="text-xs text-slate-500">
-        Daftar file diperbarui otomatis setiap beberapa detik.
+        Daftar file dan transfer teks diperbarui otomatis setiap beberapa detik.
       </p>
       {error && (
         <div className="rounded-lg bg-red-500/10 p-3 text-sm text-red-400">

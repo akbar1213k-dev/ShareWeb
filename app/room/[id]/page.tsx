@@ -3,6 +3,7 @@ import FileListWrapper from "@/components/FileListWrapper";
 import RoomShareInfo from "@/components/RoomShareInfo";
 import RoomActions from "@/components/RoomActions";
 import EditRoomName from "@/components/EditRoomName";
+import LocalTransfer from "@/components/LocalTransfer";
 import { formatBytes } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -90,6 +91,8 @@ export default async function RoomPage({
 
       <RoomActions roomId={room.id} initialStatus={room.status} />
 
+      <LocalTransfer roomId={room.id} />
+
       <RoomShareInfo
         roomId={room.id}
         code={room.code}
@@ -97,7 +100,7 @@ export default async function RoomPage({
       />
 
       <section>
-        <h2 className="mb-3 text-lg font-semibold">File Room</h2>
+        <h2 className="mb-3 text-lg font-semibold">Transfer Room</h2>
         <FileListWrapper roomId={room.id} initialFiles={initialFiles} />
       </section>
     </div>
